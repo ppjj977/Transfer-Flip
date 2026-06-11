@@ -58,7 +58,7 @@ function candidateWeight(
   return w;
 }
 
-function buildOffer(slot: OfferSlot, held: Player, value: number, player: Player): Offer {
+function buildOffer(slot: OfferSlot, value: number, player: Player): Offer {
   const fee = player.peakValue * AGENT_FEE;
   return {
     slot,
@@ -97,7 +97,7 @@ export function generateOffers(
     const chosen = rng.weighted(cands, weights);
 
     taken.add(chosen.id);
-    offers.push(buildOffer(slot, held, value, chosen));
+    offers.push(buildOffer(slot, value, chosen));
   }
 
   return offers;
