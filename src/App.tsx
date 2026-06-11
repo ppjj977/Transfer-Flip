@@ -2,8 +2,9 @@ import { useEffect, useMemo, useState } from 'react';
 import { PoolIndex } from './engine/pool';
 import type { Mode, Player } from './engine/types';
 import { seedFromUrl } from './lib/share';
-import { loadStats } from './lib/storage';
+import { hasSeenIntro, loadStats, markIntroSeen } from './lib/storage';
 import { Game } from './components/Game';
+import { HowToPlay } from './components/HowToPlay';
 
 interface PoolFile {
   meta: { source?: string; generated?: string };
@@ -33,17 +34,39 @@ export default function App() {
   const initialSeed = useMemo(() => seedFromUrl(), []);
   const stats = useMemo(() => loadStats(), []);
   const initialMode: Mode = 'normal';
+  const [showHelp, setShowHelp] = useState(false);
+
+  // Auto-show the intro once, after the pool has loaded.
+  useEffect(() => {
+    if (pool && !hasSeenIntro()) setShowHelp(true);
+  }, [pool]);
+
+  const closeHelp = () => {
+    setShowHelp(false);
+    markIntroSeen();
+  };
 
   return (
     <div className="mx-auto flex min-h-full max-w-md flex-col px-4 pb-6 pt-4">
-      <header className="mb-3">
-        <h1 className="text-2xl font-black tracking-tight">
-          THE FLIP <span className="text-ticker">🔁</span>
-        </h1>
-        <p className="text-xs text-slate-500">
-          12 windows. One journeyman. Flip your way to a Galáctico.
-        </p>
+      <header className="mb-3 flex items-start justify-between gap-2">
+        <div>
+          <h1 className="text-2xl font-black tracking-tight">
+            THE FLIP <span className="text-ticker">🔁</span>
+          </h1>
+          <p className="text-xs text-slate-500">
+            12 turns to flip a journeyman into a £100m Galáctico. No years — just peak values & market swings.
+          </p>
+        </div>
+        <button
+          onClick={() => setShowHelp(true)}
+          aria-label="How to play"
+          className="mt-1 shrink-0 rounded-full border border-edge bg-panel px-3 py-1 text-sm font-bold text-slate-300 active:scale-95"
+        >
+          ? Help
+        </button>
       </header>
+
+      {showHelp && <HowToPlay onClose={closeHelp} />}
 
       {error && (
         <div className="rounded-xl border border-loss/40 bg-loss/10 p-4 text-sm">

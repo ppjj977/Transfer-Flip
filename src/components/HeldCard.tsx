@@ -42,12 +42,15 @@ export function HeldCard({ player, displayValue, history, window, totalWindows, 
       </div>
 
       <div className="mt-3 flex items-end justify-between">
-        <div
-          className={`tabular text-4xl font-extrabold ${
-            flashing === 'gain' ? 'text-gain' : flashing === 'loss' ? 'text-loss' : 'text-white'
-          }`}
-        >
-          {formatValue(displayValue)}
+        <div>
+          <div className="text-[10px] uppercase tracking-wider text-slate-500">Market value</div>
+          <div
+            className={`tabular text-4xl font-extrabold ${
+              flashing === 'gain' ? 'text-gain' : flashing === 'loss' ? 'text-loss' : 'text-white'
+            }`}
+          >
+            {formatValue(displayValue)}
+          </div>
         </div>
         <Sparkline values={history} />
       </div>
