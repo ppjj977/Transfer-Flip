@@ -17,6 +17,8 @@ export interface Player {
   peakAge: number;
   vol: Vol;
   band: number;
+  /** Recognisability score (caps + value + league), for surfacing known names. */
+  fame?: number;
 }
 
 export type OfferSlot = 'safe' | 'value' | 'punt';

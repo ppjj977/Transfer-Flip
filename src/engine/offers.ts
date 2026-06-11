@@ -51,6 +51,9 @@ function candidateWeight(
   if (cand.league === held.league) w *= SAME_LEAGUE_WEIGHT;
   if (cand.posGroup === held.posGroup) w *= SAME_POSGROUP_WEIGHT;
   if (cand.vol === OFFER_BANDS[slot].preferVol) w *= PREFER_VOL_WEIGHT;
+  // Recognisability: surface well-known names more often (up to ~3.5x), while
+  // still leaving room for variety so runs don't all show the same faces.
+  w *= 1 + Math.min(cand.fame ?? 0, 125) / 50;
   // Closeness to the target value: a soft triangular falloff so the realised
   // multiplier stays near the slot's intent.
   const rel = Math.abs(cand.peakValue - target) / target;
