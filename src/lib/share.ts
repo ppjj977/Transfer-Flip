@@ -23,10 +23,14 @@ export function clearSeedInUrl(): void {
   window.history.replaceState({}, '', url.toString());
 }
 
-/** Build the share string using the live site origin for the replay link. */
+/** Build the share string using the live site origin + base path so the replay
+ * link resolves on project hosts like ppjj977.github.io/transfer-flip/. */
 export function buildShare(run: RunState): string {
-  const origin = window.location.host || 'theflip.game';
-  return shareString(run, origin);
+  const host = window.location.host;
+  if (!host) return shareString(run, 'theflip.game');
+  // Include the base path (strip trailing slash); scoring appends "/?s=SEED".
+  const path = window.location.pathname.replace(/\/$/, '');
+  return shareString(run, host + path);
 }
 
 /** Copy text to the clipboard, with a legacy fallback. Resolves to success. */
