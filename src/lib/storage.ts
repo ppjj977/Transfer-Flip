@@ -48,6 +48,25 @@ function save(stats: Stats): void {
   }
 }
 
+const INTRO_KEY = 'theflip:seen-intro:v1';
+
+/** Whether the first-time "How to play" overlay has been dismissed. */
+export function hasSeenIntro(): boolean {
+  try {
+    return localStorage.getItem(INTRO_KEY) === '1';
+  } catch {
+    return false;
+  }
+}
+
+export function markIntroSeen(): void {
+  try {
+    localStorage.setItem(INTRO_KEY, '1');
+  } catch {
+    /* storage unavailable; show the intro again next time, no harm */
+  }
+}
+
 /** Record a finished run, updating streak/best/unlock. Returns the new stats. */
 export function recordRun(args: {
   busted: boolean;
