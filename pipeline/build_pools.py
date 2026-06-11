@@ -120,23 +120,25 @@ class Rec:
 # to keep names recognisable"). Keyed by Transfermarkt competition code, which
 # is players.current_club_domestic_competition_id. Brazil/Argentina/MLS/Saudi
 # are included to capture current stars and faded legends at their peak value.
-# Obscure leagues (Greece, Ukraine, Russia, Denmark, Belgium, Türkiye, Scotland)
-# are intentionally excluded to keep names recognisable; the big-5 plus
-# Eredivisie/Portugal and the star-magnet leagues (MLS/Saudi/Brazil/Argentina)
-# remain.
-TOP_LEAGUES = {
+# Core leagues, included at every value band: England, France, Spain, Italy.
+CORE_LEAGUES = {
     "GB1": "Premier League",
+    "FR1": "Ligue 1",
     "ES1": "LaLiga",
     "IT1": "Serie A",
-    "L1": "Bundesliga",
-    "FR1": "Ligue 1",
-    "NL1": "Eredivisie",
-    "PO1": "Liga Portugal",
-    "BRA1": "Brasileirão",
-    "ARG1": "Primera División",
-    "MLS1": "Major League Soccer",
-    "SA1": "Saudi Pro League",
 }
+
+# "Twilight" leagues where stars finish their careers — included ONLY at the
+# high end (peak value >= TWILIGHT_MIN_GBP), so we capture Messi (MLS), Ronaldo
+# / Benzema (Saudi), Neymar (Brazil) but none of their journeyman team-mates.
+TWILIGHT_LEAGUES = {
+    "SA1": "Saudi Pro League",
+    "BRA1": "Brasileirão",
+    "MLS1": "Major League Soccer",
+}
+TWILIGHT_MIN_GBP = 40_000_000
+
+TOP_LEAGUES = {**CORE_LEAGUES, **TWILIGHT_LEAGUES}
 
 # Per-band caps to hit the spec's 4,000–8,000 target pool size and the <2MB
 # budget. Lower bands are huge, so we keep the most recognisable players in each
@@ -248,6 +250,13 @@ def build_from_csv(raw_dir: str) -> list[Rec]:
             band=value_to_band(peak_gbp),
             fame=fame_score(caps, peak_gbp, league),
         ))
+
+    # Twilight leagues only count at the high end (the Messi/Ronaldo end).
+    twilight_names = set(TWILIGHT_LEAGUES.values())
+    before = len(recs)
+    recs = [r for r in recs if r.league not in twilight_names or r.peakValue >= TWILIGHT_MIN_GBP]
+    print(f"  dropped {before - len(recs)} low-value twilight-league players "
+          f"(kept only >= £{TWILIGHT_MIN_GBP / 1e6:g}m)")
 
     return _cap_bands(recs)
 

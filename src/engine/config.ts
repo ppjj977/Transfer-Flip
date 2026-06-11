@@ -6,9 +6,10 @@ export const TOTAL_WINDOWS = 12;
 export const AGENT_FEE = 0.05; // 5% of incoming player value
 export const BUST_FLOOR = 100_000; // value below this => BUST
 
-// Starter band: £300k–£1m.
-export const STARTER_MIN = 300_000;
-export const STARTER_MAX = 1_000_000;
+// Starter band: £4m–£10m (recognisable established players; the climb to a
+// £100m Galáctico is ~10–25x, so the growth below is dampened accordingly).
+export const STARTER_MIN = 4_000_000;
+export const STARTER_MAX = 10_000_000;
 
 // --- Event-phase distributions (per window), by volatility archetype. ---
 // Tuned via the harness against the balance target in spec §2.5:
@@ -27,10 +28,10 @@ export interface EventDist {
 
 export const EVENT_DISTS: Record<Vol, EventDist> = {
   LOW: {
-    mean: 1.015,
-    sd: 0.07,
-    floor: 0.82,
-    cap: 1.35,
+    mean: 1.005,
+    sd: 0.06,
+    floor: 0.85,
+    cap: 1.25,
     injuryChance: 0.0,
     injuryMult: 1.0,
     breakoutChance: 0.0,
@@ -38,24 +39,24 @@ export const EVENT_DISTS: Record<Vol, EventDist> = {
     blowupChance: 0.0,
   },
   MED: {
-    mean: 1.06,
-    sd: 0.19,
-    floor: 0.55,
-    cap: 1.9,
+    mean: 1.01,
+    sd: 0.16,
+    floor: 0.6,
+    cap: 1.7,
     injuryChance: 0.02,
-    injuryMult: 0.55,
+    injuryMult: 0.6,
     breakoutChance: 0.03,
     breakoutMult: 1.7,
     blowupChance: 0.01,
   },
   HIGH: {
-    mean: 1.085,
-    sd: 0.33,
-    floor: 0.45,
-    cap: 2.4,
+    mean: 1.02,
+    sd: 0.31,
+    floor: 0.5,
+    cap: 2.3,
     injuryChance: 0.05,
-    injuryMult: 0.5,
-    breakoutChance: 0.085,
+    injuryMult: 0.55,
+    breakoutChance: 0.09,
     breakoutMult: 2.15,
     blowupChance: 0.1,
   },
@@ -77,9 +78,9 @@ export interface OfferBand {
 }
 
 export const OFFER_BANDS: Record<OfferSlot, OfferBand> = {
-  safe: { min: 0.99, max: 1.13, preferVol: 'LOW' },
-  value: { min: 1.1, max: 1.42, preferVol: 'MED' },
-  punt: { min: 1.34, max: 1.85, preferVol: 'HIGH' },
+  safe: { min: 0.98, max: 1.08, preferVol: 'LOW' },
+  value: { min: 1.06, max: 1.26, preferVol: 'MED' },
+  punt: { min: 1.2, max: 1.62, preferVol: 'HIGH' },
 };
 
 export const OFFER_SLOT_ORDER: OfferSlot[] = ['safe', 'value', 'punt'];

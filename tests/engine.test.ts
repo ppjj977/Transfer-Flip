@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { initRun, beginWindow, decide, playRun, armInsurance } from '../src/engine/run';
 import { generateOffers } from '../src/engine/offers';
 import { rollEventMult } from '../src/engine/events';
+import { STARTER_MIN, STARTER_MAX } from '../src/engine/config';
 import { RNG } from '../src/engine/rng';
 import { makeTestPool } from './fixtures';
 import type { Decision } from '../src/engine/types';
@@ -41,10 +42,10 @@ describe('determinism (Phase 1 acceptance)', () => {
 });
 
 describe('run state machine', () => {
-  it('starter is within the £300k–£1m band', () => {
+  it('starter is within the configured starter band', () => {
     const s = initRun('STARTER', 'normal', pool);
-    expect(s.value).toBeGreaterThanOrEqual(300_000);
-    expect(s.value).toBeLessThanOrEqual(1_000_000);
+    expect(s.value).toBeGreaterThanOrEqual(STARTER_MIN);
+    expect(s.value).toBeLessThanOrEqual(STARTER_MAX);
     expect(s.chain).toHaveLength(1);
     expect(s.window).toBe(1);
   });
