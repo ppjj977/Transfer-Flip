@@ -59,11 +59,13 @@ export class PoolIndex {
     return out;
   }
 
-  /** Pick a starter, weighting familiar (English) leagues up for recognisability. */
+  /** Pick a starter, weighting familiar leagues and recognisable names up. */
   pickStarter(rng: RNG): Player {
-    const weights = this.starters.map((p) =>
-      FAMILIAR_LEAGUES.has(p.league) ? FAMILIAR_LEAGUE_WEIGHT : 1,
-    );
+    const weights = this.starters.map((p) => {
+      let w = FAMILIAR_LEAGUES.has(p.league) ? FAMILIAR_LEAGUE_WEIGHT : 1;
+      w *= 1 + Math.min(p.fame ?? 0, 80) / 30; // favour more recognisable journeymen
+      return w;
+    });
     return rng.weighted(this.starters, weights);
   }
 }

@@ -111,6 +111,7 @@ class Rec:
     peakAge: int
     vol: str
     band: int
+    fame: int
 
 
 # --- REAL data path ---------------------------------------------------------
@@ -119,6 +120,10 @@ class Rec:
 # to keep names recognisable"). Keyed by Transfermarkt competition code, which
 # is players.current_club_domestic_competition_id. Brazil/Argentina/MLS/Saudi
 # are included to capture current stars and faded legends at their peak value.
+# Obscure leagues (Greece, Ukraine, Russia, Denmark, Belgium, Türkiye, Scotland)
+# are intentionally excluded to keep names recognisable; the big-5 plus
+# Eredivisie/Portugal and the star-magnet leagues (MLS/Saudi/Brazil/Argentina)
+# remain.
 TOP_LEAGUES = {
     "GB1": "Premier League",
     "ES1": "LaLiga",
@@ -127,13 +132,6 @@ TOP_LEAGUES = {
     "FR1": "Ligue 1",
     "NL1": "Eredivisie",
     "PO1": "Liga Portugal",
-    "TR1": "Süper Lig",
-    "BE1": "Belgian Pro League",
-    "SC1": "Scottish Premiership",
-    "RU1": "Russian Premier League",
-    "GR1": "Super League Greece",
-    "UKR1": "Ukrainian Premier League",
-    "DK1": "Danish Superliga",
     "BRA1": "Brasileirão",
     "ARG1": "Primera División",
     "MLS1": "Major League Soccer",
@@ -141,9 +139,40 @@ TOP_LEAGUES = {
 }
 
 # Per-band caps to hit the spec's 4,000–8,000 target pool size and the <2MB
-# budget. Lower bands are huge, so we keep the most-tracked (most recognisable)
-# players in each; the scarce upper bands (6+) are kept whole.
+# budget. Lower bands are huge, so we keep the most recognisable players in each
+# (by the fame score below); the scarce upper bands (6+) are kept whole.
 PER_BAND_CAP = {0: 900, 1: 900, 2: 900, 3: 850, 4: 800, 5: 800}
+
+# League recognisability bonus for the fame score. Premier League is weighted
+# highest for a UK-leaning audience; the big-5 next; then the leagues that mostly
+# matter as homes for ex-stars / current superstars.
+LEAGUE_FAME_BONUS = {
+    "Premier League": 30,
+    "LaLiga": 18,
+    "Serie A": 18,
+    "Bundesliga": 18,
+    "Ligue 1": 15,
+    "Eredivisie": 8,
+    "Liga Portugal": 8,
+    "Major League Soccer": 6,
+    "Saudi Pro League": 6,
+    "Brasileirão": 6,
+    "Primera División": 6,
+    "Scottish Premiership": 5,
+    "Süper Lig": 5,
+    "Belgian Pro League": 4,
+}
+
+
+def fame_score(caps: int, peak_gbp: float, league: str) -> int:
+    """Recognisability proxy: international caps dominate for the famous, value
+    and league carry the lower bands where caps are ~0. Used to populate each
+    band with the most recognisable players and to bias offers toward them."""
+    return int(round(
+        caps * 1.0
+        + (peak_gbp / 1_000_000) * 0.4
+        + LEAGUE_FAME_BONUS.get(league, 0)
+    ))
 
 
 def build_from_csv(raw_dir: str) -> list[Rec]:
@@ -183,9 +212,7 @@ def build_from_csv(raw_dir: str) -> list[Rec]:
     players = players.set_index("player_id")
     players["dob"] = pd.to_datetime(players["date_of_birth"], errors="coerce")
 
-    # Collect (tracking points, record); points = number of valuation data
-    # points, a proxy for how well-known/covered the player is.
-    scored: list[tuple[int, Rec]] = []
+    recs: list[Rec] = []
     for pid, row in agg.iterrows():
         if pid not in players.index:
             continue
@@ -202,37 +229,43 @@ def build_from_csv(raw_dir: str) -> list[Rec]:
         pos = str(p.get("position") or "")
         pos_group = coerce_pos_group(pos, sub_pos)
         peak_gbp = float(row["peak_gbp"])
+        league = TOP_LEAGUES[str(p[league_col])]
 
-        scored.append((int(row["n"]), Rec(
+        caps_raw = p.get("international_caps")
+        caps = int(caps_raw) if caps_raw == caps_raw and str(caps_raw).strip() not in ("", "nan") else 0
+
+        recs.append(Rec(
             id=f"tm_{pid}",
             name=str(p.get("name") or "Unknown"),
             pos=sub_pos or pos or "MID",
             posGroup=pos_group,
             nat=str(p.get("country_of_citizenship") or ""),
-            league=TOP_LEAGUES[str(p[league_col])],
+            league=league,
             club=str(p.get("current_club_name") or "Unknown"),
             peakValue=int(round(peak_gbp)),
             peakAge=peak_age,
             vol=volatility_from(cv, peak_age, pos_group),
             band=value_to_band(peak_gbp),
-        )))
+            fame=fame_score(caps, peak_gbp, league),
+        ))
 
-    return _cap_bands(scored)
+    return _cap_bands(recs)
 
 
-def _cap_bands(scored: list[tuple[int, Rec]]) -> list[Rec]:
-    """Keep at most PER_BAND_CAP[b] players per band, preferring the most-tracked."""
-    by_band: dict[int, list[tuple[int, Rec]]] = {}
-    for points, rec in scored:
-        by_band.setdefault(rec.band, []).append((points, rec))
+def _cap_bands(recs: list[Rec]) -> list[Rec]:
+    """Keep at most PER_BAND_CAP[b] players per band, preferring the most famous
+    (recognisable) — this is what keeps the on-screen names ones people know."""
+    by_band: dict[int, list[Rec]] = {}
+    for rec in recs:
+        by_band.setdefault(rec.band, []).append(rec)
 
     out: list[Rec] = []
     for band, items in sorted(by_band.items()):
         cap = PER_BAND_CAP.get(band)
         if cap is not None and len(items) > cap:
-            items.sort(key=lambda t: t[0], reverse=True)  # most tracked first
+            items.sort(key=lambda r: r.fame, reverse=True)
             items = items[:cap]
-        out.extend(rec for _, rec in items)
+        out.extend(items)
     return out
 
 
@@ -323,6 +356,7 @@ def build_synthetic(seed: int = 1234) -> list[Rec]:
                 peakAge=peak_age,
                 vol=volatility_from(cv, peak_age, group),
                 band=band,
+                fame=fame_score(0, peak_gbp, league),
             ))
     return recs
 
