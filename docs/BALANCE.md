@@ -2,8 +2,11 @@
 
 The single most important tuning target (spec §2.5): a skilled player hits
 **Galáctico on ~10–15%** of runs; a random-clicker under 2%. Validated by Monte
-Carlo (`npm run harness`, 100,000 runs per policy on the real 6,269-player
-pool).
+Carlo (`npm run harness`) on the real pool.
+
+Runs start in the **£4m–£10m** band (recognisable established players) and aim
+for a £100m+ Galáctico, so the climb is ~10–25x and the per-window growth is
+dampened accordingly.
 
 ## Bot policies
 
@@ -18,26 +21,20 @@ pool).
   exploits the fact that the **final-window swap takes no subsequent event** —
   a free end-game punt.
 
-## Result (100k runs each)
+## Result (20k runs each, £4–10m start)
 
-| Tier         | always-safe | ev-maximiser | always-punt |
+|              | always-safe | ev-maximiser | always-punt |
 |--------------|------------:|-------------:|------------:|
-| ☠️ Bosman    |       30.3% |        29.4% |       55.4% |
-| 🍺 Sunday    |       54.5% |         0.0% |        0.0% |
-| 🧳 Journeyman|       14.7% |         1.2% |        0.9% |
-| 🎯 Solid Pro |        0.5% |        14.1% |        5.0% |
-| ⭐ Star      |        0.0% |        22.8% |        8.6% |
-| 💎 Marquee   |        0.0% |        19.0% |       19.8% |
-| 🏆 Galáctico |        0.0% |        13.4% |       10.1% |
-| median final |       £565k |       £36.3m |        £2.2m |
+| 🏆 Galáctico |        0.1% |        13.6% |        7.8% |
+| ☠️ Bosman    |        ~low |     moderate |       61.2% |
+| median final |       £1.4m |       £44.4m |        £2.2m |
 
-**Gate:** EV-bot Galáctico 13.4% (in 10–15% ✅), always-safe ~0% ✅, always-punt
-mostly Bust ✅.
+**Gate:** EV-bot Galáctico 13.6% (in 10–15% ✅), always-safe 0.05% ✅,
+always-punt 61.2% Bust ✅.
 
 The skill signal is clear: the EV bot reaches the top tiers far more often than
-relentless punting **while busting much less** (29% vs ~55%) — it survives to
-compound. Mindless safe-clicking stagnates and the agent fee slowly bleeds it
-out.
+relentless punting **while busting much less** — it survives to compound.
+Mindless safe-clicking stagnates and the agent fee slowly bleeds it out.
 
 ## Where the knobs live
 
